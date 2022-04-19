@@ -24,7 +24,6 @@ namespace CrudServer
             services.AddDbContext<UserContext>(options => options.UseSqlServer(con));
 
             services.AddControllers();
-
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -35,7 +34,6 @@ namespace CrudServer
                 app.UseDeveloperExceptionPage();
             }
             {
-
                 app.UseRouting();
 
                 app.UseEndpoints(endpoints =>
