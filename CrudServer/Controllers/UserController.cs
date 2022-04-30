@@ -37,9 +37,7 @@ namespace CrudServer.Controllers
         public async Task<ActionResult<IEnumerable<User>>> Get(int id)
         {
             User user = await db.Users.FindAsync(id);
-            if (user == null)
-                return BadRequest();
-
+           
             if (!db.Users.Any(x => x.Id == user.Id))
             {
                 return NotFound();
@@ -49,42 +47,48 @@ namespace CrudServer.Controllers
         }
 
         //POST//Add new user to repository
-        [HttpPost]
+        /*[HttpPost]
         public async Task<ActionResult<User>> Post(User user)
         {
             if (user == null) return BadRequest();
 
-            db.Users.Add(user);
-            await db.SaveChangesAsync();
-            return Ok(user);
-        }
+            if (!db.Users.Contains(user))
+            {
+                db.Users.Add(user);
+                await db.SaveChangesAsync();
+            }
 
-        //PUT
+            return Ok(user);
+
+        }*/
+
+        //PUT if Db not contains user with such id, we create it and add, if user.id is found we just change it for new user
         [HttpPut]
         public async Task<ActionResult<User>> Put(User user)
         {
             var user2 = db.Users.FirstOrDefault(x => x.Id == user.Id);
 
-            if (user2 == null) return BadRequest();
-
-            if (!db.Users.Any(x=>x.Id==user.Id))
+            if (!db.Users.Contains(user))
             {
-                return NotFound();
+                db.Users.Add(user);
+                await db.SaveChangesAsync();
             }
-            
-            db.Users.Remove(user2);
-            db.Users.Add(user);
-            await db.SaveChangesAsync();
-
+            else
+            {
+                db.Users.Remove(user2);
+                db.Users.Add(user);
+                await db.SaveChangesAsync();
+            }
+           
             return Ok(user);
         }
 
         //DELETE
         [HttpDelete("{id}")]
-        public async Task<ActionResult<User>> Delete(int item)
+        public async Task<ActionResult<User>> Delete(long item)
         {
             User user = db.Users.FirstOrDefault(x=>x.Id==item);
-            if (user == null) return BadRequest();
+            if (user == null) return NotFound();
 
             db.Users.Remove(user);
 
