@@ -5,14 +5,20 @@ using CrudServer.Model;
 using System.Linq;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using System.Threading;
+using System.Diagnostics;
+using System.Net;
 
+// https://localhost:44305/api/user/1
 namespace CrudServer.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+
     public class UserController : ControllerBase
     {
         private UserContext db;
+        
 
         public UserController(UserContext context)
         { db = context;
@@ -27,22 +33,25 @@ namespace CrudServer.Controllers
 
         //Return all collection
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<User>>> Get()
+        public async Task<ActionResult<IEnumerable<User>>> Get(CancellationToken ct)
         {
-            return await db.Users.ToListAsync();
+            
+            return await db.Users.ToListAsync(ct);
         }
 
         //GET //Return collection's instatnce via id
         [HttpGet("{id}")]
-        public async Task<ActionResult<IEnumerable<User>>> Get(int id)
+        public async Task<ActionResult<IEnumerable<User>>> Get(int  id, CancellationToken ct)
         {
-            User user = await db.Users.FindAsync(id);
+            
            
-            if (!db.Users.Any(x => x.Id == user.Id))
-            {
-                return NotFound();
-            }
+            User user = await db.Users.FindAsync(id,ct);
 
+            if (user==null)
+            {
+                return NotFound(ct);
+            }
+           
             return new ObjectResult(user);
         }
 
@@ -64,9 +73,10 @@ namespace CrudServer.Controllers
 
         //PUT if Db not contains user with such id, we create it and add, if user.id is found we just change it for new user
         [HttpPut]
-        public async Task<ActionResult<User>> Put(User user)
+        public async Task<ActionResult<User>> Put(User user, CancellationToken ct)
         {
-            var user2 = db.Users.FirstOrDefault(x => x.Id == user.Id);
+            
+            var user2 = await db.Users.FirstOrDefaultAsync(x => x.Id == user.Id, ct);
 
             if (!db.Users.Contains(user))
             {
@@ -77,7 +87,7 @@ namespace CrudServer.Controllers
             {
                 db.Users.Remove(user2);
                 db.Users.Add(user);
-                await db.SaveChangesAsync();
+                await db.SaveChangesAsync(ct);
             }
            
             return Ok(user);
@@ -85,14 +95,15 @@ namespace CrudServer.Controllers
 
         //DELETE
         [HttpDelete("{id}")]
-        public async Task<ActionResult<User>> Delete(long item)
+        public async Task<ActionResult<User>> Delete(int item, CancellationToken ct)
         {
-            User user = db.Users.FirstOrDefault(x=>x.Id==item);
-            if (user == null) return NotFound();
+            
+            User user = await db.Users.FirstOrDefaultAsync(x=>x.Id==item, ct);
+            if (user == null) return NotFound(ct);
 
             db.Users.Remove(user);
 
-            await db.SaveChangesAsync();
+            await db.SaveChangesAsync(ct);
 
             return Ok(user);
         }
